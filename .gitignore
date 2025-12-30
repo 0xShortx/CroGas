@@ -33,3 +33,10 @@ coverage/
 
 # Session logs
 SESSION-*.md
+
+# Demo video files (not for public repo)
+DEMO_SCRIPT.md
+demo-video/
+*.mp4
+*.mov
+*.gif
