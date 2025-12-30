@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CroGas - Gas Station for AI Agents</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #2d1b2e;
+      --bg-light: #3d2b3e;
+      --surface: #4a3a4b;
+      --cream: #f4e8c1;
+      --cream-dim: #c4b891;
+      --orange: #e07020;
+      --orange-light: #f09030;
+      --red: #c04040;
+      --red-dark: #8a2020;
+      --teal: #40a0a0;
+      --teal-dark: #206060;
+      --brown: #6a4a3a;
+      --brown-dark: #4a2a1a;
+      --yellow: #f0c040;
+      --pixel-border: 4px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'VT323', monospace;
+      background: var(--bg);
+      color: var(--cream);
+      min-height: 100vh;
+      font-size: 18px;
+      line-height: 1.5;
+      image-rendering: pixelated;
+    }
+
+    /* Pixel Border Mixin via box-shadow */
+    .pixel-border {
+      border: none;
+      box-shadow:
+        inset -4px -4px 0 0 var(--brown-dark),
+        inset 4px 4px 0 0 var(--orange-light),
+        inset -8px -8px 0 0 var(--brown),
+        inset 8px 8px 0 0 var(--orange);
+    }
+
+    .pixel-border-simple {
+      border: 4px solid var(--orange);
+      border-bottom-color: var(--brown-dark);
+      border-right-color: var(--brown-dark);
+    }
+
+    /* Header */
+    header {
+      background: linear-gradient(180deg, var(--red) 0%, var(--red-dark) 100%);
+      padding: 20px;
+      text-align: center;
+      border-bottom: 8px solid var(--brown-dark);
+      position: relative;
+    }
+
+    header::after {
+      content: "";
+      position: absolute;
+      bottom: -16px;
+      left: 0;
+      right: 0;
+      height: 8px;
+      background: var(--orange);
+    }
+
+    .logo {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 32px;
+      color: var(--cream);
+      text-shadow:
+        4px 4px 0 var(--brown-dark),
+        -2px -2px 0 var(--orange-light);
+      letter-spacing: 4px;
+    }
+
+    .tagline {
+      font-size: 16px;
+      color: var(--cream-dim);
+      margin-top: 8px;
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    /* Hero Section */
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      align-items: center;
+      margin-bottom: 60px;
+    }
+
+    @media (max-width: 768px) {
+      .hero { grid-template-columns: 1fr; }
+    }
+
+    .hero-text h1 {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 20px;
+      line-height: 1.8;
+      margin-bottom: 20px;
+      color: var(--yellow);
+    }
+
+    .hero-text p {
+      font-size: 22px;
+      margin-bottom: 16px;
+      color: var(--cream);
+    }
+
+    .hero-text .highlight {
+      color: var(--orange-light);
+      font-weight: bold;
+    }
+
+    /* Pixel Art Gas Pump */
+    .pump-art {
+      display: flex;
+      justify-content: center;
+    }
+
+    .pixel-pump {
+      width: 200px;
+      position: relative;
+    }
+
+    .pixel-pump svg {
+      width: 100%;
+      height: auto;
+      filter: drop-shadow(8px 8px 0 rgba(0,0,0,0.3));
+    }
+
+    /* Problem/Solution Cards */
+    .cards-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+
+    @media (max-width: 600px) {
+      .cards-row { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--surface);
+      padding: 24px;
+      position: relative;
+    }
+
+    .card-header {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 12px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .card-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--orange);
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+    }
+
+    .card.problem .card-icon { background: var(--red); }
+    .card.solution .card-icon { background: var(--teal); }
+
+    .card p {
+      font-size: 20px;
+      color: var(--cream-dim);
+    }
+
+    .card strong {
+      color: var(--cream);
+    }
+
+    /* Quick Start Section */
+    .section {
+      margin-bottom: 48px;
+    }
+
+    .section-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 14px;
+      color: var(--yellow);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .section-title::before,
+    .section-title::after {
+      content: "";
+      flex: 1;
+      height: 4px;
+      background: repeating-linear-gradient(
+        90deg,
+        var(--orange) 0px,
+        var(--orange) 8px,
+        transparent 8px,
+        transparent 16px
+      );
+    }
+
+    /* Terminal Box */
+    .terminal {
+      background: #1a1a2e;
+      padding: 4px;
+      position: relative;
+    }
+
+    .terminal-header {
+      background: var(--surface);
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      color: var(--cream-dim);
+    }
+
+    .terminal-dot {
+      width: 12px;
+      height: 12px;
+      background: var(--red);
+    }
+
+    .terminal-dot:nth-child(2) { background: var(--yellow); }
+    .terminal-dot:nth-child(3) { background: var(--teal); }
+
+    .terminal-body {
+      padding: 20px;
+      font-family: 'VT323', monospace;
+      font-size: 20px;
+      color: var(--teal);
+    }
+
+    .terminal-line {
+      margin: 8px 0;
+    }
+
+    .terminal-line::before {
+      content: "> ";
+      color: var(--orange);
+    }
+
+    .terminal-line.output::before {
+      content: "";
+    }
+
+    .terminal-line.output {
+      color: var(--cream-dim);
+      padding-left: 20px;
+    }
+
+    .terminal-highlight {
+      color: var(--yellow);
+    }
+
+    /* Stats Bar */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+      margin-bottom: 40px;
+    }
+
+    @media (max-width: 600px) {
+      .stats-bar { grid-template-columns: 1fr; }
+    }
+
+    .stat-box {
+      background: var(--surface);
+      padding: 20px;
+      text-align: center;
+    }
+
+    .stat-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      color: var(--cream-dim);
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      color: var(--yellow);
+    }
+
+    .stat-value.teal { color: var(--teal); }
+    .stat-value.orange { color: var(--orange-light); }
+
+    /* Pricing Pumps */
+    .pumps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+
+    @media (max-width: 600px) {
+      .pumps-grid { grid-template-columns: 1fr; }
+    }
+
+    .pump-card {
+      background: var(--surface);
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.1s;
+      position: relative;
+    }
+
+    .pump-card:hover {
+      transform: translateY(-4px);
+    }
+
+    .pump-card.active {
+      background: var(--teal-dark);
+    }
+
+    .pump-card.active::before {
+      content: "SELECTED";
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--yellow);
+      color: var(--bg);
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      padding: 4px 8px;
+    }
+
+    .pump-grade {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      color: var(--cream-dim);
+      margin-bottom: 12px;
+    }
+
+    .pump-mini {
+      font-size: 40px;
+      margin-bottom: 8px;
+    }
+
+    .pump-price {
+      font-size: 28px;
+      color: var(--yellow);
+      margin-bottom: 4px;
+    }
+
+    .pump-time {
+      font-size: 16px;
+      color: var(--cream-dim);
+    }
+
+    /* Faucet */
+    .faucet-box {
+      background: var(--surface);
+      padding: 24px;
+      margin-bottom: 40px;
+    }
+
+    .faucet-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    @media (max-width: 600px) {
+      .faucet-row { flex-direction: column; }
+    }
+
+    .pixel-input {
+      flex: 1;
+      background: var(--bg);
+      border: 4px solid var(--brown);
+      border-bottom-color: var(--orange);
+      border-right-color: var(--orange);
+      padding: 12px 16px;
+      font-family: 'VT323', monospace;
+      font-size: 20px;
+      color: var(--cream);
+      outline: none;
+    }
+
+    .pixel-input:focus {
+      border-color: var(--teal);
+    }
+
+    .pixel-input::placeholder {
+      color: var(--cream-dim);
+    }
+
+    .pixel-btn {
+      background: var(--orange);
+      border: 4px solid var(--orange-light);
+      border-bottom-color: var(--brown-dark);
+      border-right-color: var(--brown-dark);
+      padding: 12px 24px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 12px;
+      color: var(--cream);
+      cursor: pointer;
+      transition: all 0.1s;
+      white-space: nowrap;
+    }
+
+    .pixel-btn:hover {
+      background: var(--orange-light);
+    }
+
+    .pixel-btn:active {
+      transform: translateY(2px);
+      border: 4px solid var(--brown-dark);
+      border-bottom-color: var(--orange-light);
+      border-right-color: var(--orange-light);
+    }
+
+    .pixel-btn.teal {
+      background: var(--teal);
+      border-color: var(--teal);
+      border-bottom-color: var(--teal-dark);
+      border-right-color: var(--teal-dark);
+    }
+
+    .alert {
+      margin-top: 16px;
+      padding: 12px;
+      font-size: 18px;
+      display: none;
+    }
+
+    .alert.show { display: block; }
+    .alert.success { background: var(--teal-dark); color: var(--cream); }
+    .alert.error { background: var(--red-dark); color: var(--cream); }
+    .alert a { color: var(--yellow); }
+
+    /* API List */
+    .api-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    @media (max-width: 600px) {
+      .api-grid { grid-template-columns: 1fr; }
+    }
+
+    .api-item {
+      background: var(--surface);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .api-method {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      padding: 4px 8px;
+      background: var(--teal-dark);
+      color: var(--cream);
+    }
+
+    .api-method.post {
+      background: var(--orange);
+    }
+
+    .api-path {
+      font-size: 18px;
+      color: var(--cream);
+      flex: 1;
+    }
+
+    /* Demo Section */
+    .demo-section {
+      background: var(--surface);
+      padding: 24px;
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .demo-section img {
+      max-width: 100%;
+      border: 4px solid var(--brown);
+      margin-top: 16px;
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 32px 20px;
+      background: var(--red-dark);
+      margin-top: 60px;
+      border-top: 8px solid var(--orange);
+    }
+
+    footer p {
+      font-size: 16px;
+      color: var(--cream-dim);
+      margin-bottom: 16px;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+    }
+
+    .footer-links a {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      color: var(--cream);
+      text-decoration: none;
+      padding: 8px 16px;
+      background: var(--red);
+      transition: background 0.1s;
+    }
+
+    .footer-links a:hover {
+      background: var(--orange);
+    }
+
+    /* Animations */
+    @keyframes pump-glow {
+      0%, 100% { filter: drop-shadow(0 0 10px var(--orange)); }
+      50% { filter: drop-shadow(0 0 20px var(--yellow)); }
+    }
+
+    .pixel-pump svg {
+      animation: pump-glow 3s ease-in-out infinite;
+    }
+
+    /* Badge */
+    .badge {
+      display: inline-block;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      padding: 6px 12px;
+      background: var(--teal);
+      color: var(--cream);
+      margin-bottom: 16px;
+    }
+
+    /* Try It Now Section */
+    .try-it-box {
+      background: var(--surface);
+      padding: 24px;
+    }
+
+    .try-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    .try-step {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+
+    .step-badge {
+      width: 48px;
+      height: 48px;
+      background: var(--orange);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 20px;
+      color: var(--cream);
+      flex-shrink: 0;
+    }
+
+    .step-content {
+      flex: 1;
+    }
+
+    .step-content h3 {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 12px;
+      color: var(--yellow);
+      margin-bottom: 8px;
+    }
+
+    .step-content p {
+      color: var(--cream-dim);
+      margin-bottom: 12px;
+    }
+
+    .wallet-options {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .wallet-display {
+      background: var(--bg);
+      padding: 16px;
+      margin-top: 16px;
+      font-size: 14px;
+    }
+
+    .wallet-field {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .wallet-field:last-child { margin-bottom: 0; }
+
+    .wallet-field label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      color: var(--cream-dim);
+      width: 100px;
+    }
+
+    .wallet-field code {
+      font-family: 'VT323', monospace;
+      font-size: 18px;
+      color: var(--teal);
+      word-break: break-all;
+      flex: 1;
+    }
+
+    .wallet-balance {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      padding: 4px 8px;
+      background: var(--red-dark);
+      color: var(--cream);
+    }
+
+    .wallet-balance.has-balance {
+      background: var(--teal-dark);
+    }
+
+    .blur-text {
+      filter: blur(4px);
+      user-select: none;
+    }
+
+    .mini-btn {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      padding: 4px 8px;
+      background: var(--surface);
+      border: 2px solid var(--brown);
+      color: var(--cream-dim);
+      cursor: pointer;
+    }
+
+    .mini-btn:hover {
+      background: var(--brown);
+      color: var(--cream);
+    }
+
+    .tx-form {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .tx-result {
+      margin-top: 16px;
+      padding: 16px;
+      background: var(--bg);
+    }
+
+    .tx-result.success {
+      border-left: 4px solid var(--teal);
+    }
+
+    .tx-result.error {
+      border-left: 4px solid var(--red);
+    }
+
+    .tx-result h4 {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      margin-bottom: 12px;
+    }
+
+    .tx-result.success h4 { color: var(--teal); }
+    .tx-result.error h4 { color: var(--red); }
+
+    .tx-detail {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px dashed var(--surface);
+      font-size: 16px;
+    }
+
+    .tx-detail:last-child { border-bottom: none; }
+
+    .tx-detail span:first-child { color: var(--cream-dim); }
+    .tx-detail span:last-child { color: var(--cream); }
+    .tx-detail a { color: var(--teal); }
+
+    .loading-dots::after {
+      content: '';
+      animation: dots 1.5s steps(4) infinite;
+    }
+
+    @keyframes dots {
+      0% { content: ''; }
+      25% { content: '.'; }
+      50% { content: '..'; }
+      75% { content: '...'; }
+    }
+
+    @media (max-width: 600px) {
+      .try-step { flex-direction: column; }
+      .step-badge { width: 36px; height: 36px; font-size: 16px; }
+      .wallet-field { flex-direction: column; align-items: flex-start; gap: 4px; }
+      .wallet-field label { width: auto; }
+    }
+
+    /* Code Block */
+    .code-block {
+      background: var(--bg);
+      padding: 16px;
+      overflow-x: auto;
+    }
+
+    .code-block pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">CROGAS</div>
+    <div class="tagline">Gas Station for AI Agents on Cronos</div>
+  </header>
+
+  <div class="container">
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-text">
+        <div class="badge">FIRST x402 ON CRONOS</div>
+        <h1>AI AGENTS CAN'T PAY GAS FEES.</h1>
+        <h1 style="color: var(--teal);">UNTIL NOW.</h1>
+        <p>
+          Your AI agent has <span class="highlight">0 CRO</span> in its wallet.
+          It needs to execute a transaction. What does it do?
+        </p>
+        <p>
+          <strong>CroGas</strong> lets agents pay gas fees with <span class="highlight">USDC</span>
+          via the x402 protocol. No native tokens needed.
+        </p>
+      </div>
+      <div class="pump-art">
+        <div class="pixel-pump">
+          <!-- Pixel Art Gas Pump SVG -->
+          <svg viewBox="0 0 64 80" xmlns="http://www.w3.org/2000/svg">
+            <!-- Base -->
+            <rect x="8" y="60" width="48" height="16" fill="#4a2a1a"/>
+            <rect x="12" y="64" width="40" height="8" fill="#3a1a0a"/>
+
+            <!-- Body -->
+            <rect x="12" y="20" width="40" height="40" fill="#c04040"/>
+            <rect x="12" y="20" width="40" height="4" fill="#e05050"/>
+            <rect x="12" y="56" width="40" height="4" fill="#8a2020"/>
+            <rect x="12" y="20" width="4" height="40" fill="#e05050"/>
+            <rect x="48" y="20" width="4" height="40" fill="#8a2020"/>
+
+            <!-- Display -->
+            <rect x="18" y="26" width="28" height="14" fill="#1a1a2e"/>
+            <rect x="20" y="28" width="24" height="10" fill="#2a2a4e"/>
+            <!-- Numbers -->
+            <rect x="22" y="30" width="6" height="6" fill="#40a0a0"/>
+            <rect x="30" y="30" width="6" height="6" fill="#40a0a0"/>
+            <rect x="38" y="30" width="6" height="6" fill="#40a0a0"/>
+
+            <!-- Flame Logo -->
+            <rect x="26" y="44" width="12" height="12" fill="#1a1a2e"/>
+            <rect x="30" y="46" width="4" height="2" fill="#f0c040"/>
+            <rect x="28" y="48" width="8" height="2" fill="#f0c040"/>
+            <rect x="28" y="50" width="8" height="4" fill="#e07020"/>
+            <rect x="30" y="52" width="4" height="2" fill="#f0c040"/>
+
+            <!-- Top -->
+            <rect x="16" y="12" width="32" height="8" fill="#c04040"/>
+            <rect x="16" y="12" width="32" height="2" fill="#e05050"/>
+            <rect x="20" y="8" width="24" height="4" fill="#8a2020"/>
+
+            <!-- Nozzle Holder -->
+            <rect x="52" y="24" width="8" height="16" fill="#6a4a3a"/>
+            <rect x="52" y="24" width="8" height="2" fill="#8a6a5a"/>
+
+            <!-- Nozzle -->
+            <rect x="56" y="28" width="4" height="20" fill="#3a3a3a"/>
+            <rect x="54" y="44" width="8" height="8" fill="#4a4a4a"/>
+            <rect x="56" y="52" width="4" height="8" fill="#3a3a3a"/>
+
+            <!-- Hose hint -->
+            <rect x="52" y="40" width="4" height="4" fill="#2a2a2a"/>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- Problem / Solution -->
+    <div class="cards-row">
+      <div class="card problem pixel-border-simple">
+        <div class="card-header">
+          <div class="card-icon">!</div>
+          THE PROBLEM
+        </div>
+        <p>
+          <strong>AI agents need gas to transact</strong> on any blockchain.
+          But acquiring native tokens (CRO, ETH) is complex -
+          exchanges, KYC, bridging. Agents can't do this.
+        </p>
+      </div>
+      <div class="card solution pixel-border-simple">
+        <div class="card-header">
+          <div class="card-icon">+</div>
+          OUR SOLUTION
+        </div>
+        <p>
+          <strong>CroGas pays the gas for them.</strong>
+          Agents sign meta-transactions and pay us in USDC.
+          We relay to Cronos and pay CRO gas. Simple.
+        </p>
+      </div>
+    </div>
+
+    <!-- TRY IT NOW - Interactive Test -->
+    <section class="section">
+      <div class="section-title">TRY IT NOW</div>
+      <div class="try-it-box pixel-border-simple">
+        <div class="try-steps">
+
+          <!-- Step 1: Create/Enter Wallet -->
+          <div class="try-step">
+            <div class="step-badge">1</div>
+            <div class="step-content">
+              <h3>GET A TEST WALLET</h3>
+              <p>Generate a new wallet or use your agent's existing one.</p>
+              <div class="wallet-options">
+                <button class="pixel-btn" onclick="generateWallet()">GENERATE NEW WALLET</button>
+                <span style="color: var(--cream-dim);">or</span>
+                <button class="pixel-btn" onclick="toggleManualWallet()" style="background: var(--surface);">USE EXISTING</button>
+              </div>
+              <div id="wallet-display" class="wallet-display" style="display: none;">
+                <div class="wallet-field">
+                  <label>Address:</label>
+                  <code id="wallet-address">-</code>
+                  <span class="wallet-balance" id="wallet-cro">0 CRO</span>
+                </div>
+                <div class="wallet-field">
+                  <label>Private Key:</label>
+                  <code id="wallet-pk" class="blur-text">-</code>
+                  <button class="mini-btn" onclick="togglePK()">SHOW</button>
+                </div>
+                <div class="wallet-field">
+                  <label>USDC Balance:</label>
+                  <code id="wallet-usdc">0 USDC</code>
+                </div>
+              </div>
+              <div id="manual-wallet" style="display: none; margin-top: 12px;">
+                <input type="text" class="pixel-input" id="manual-pk" placeholder="Enter your agent's private key (0x...)">
+                <button class="pixel-btn" onclick="loadWallet()" style="margin-top: 8px;">LOAD WALLET</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 2: Get USDC -->
+          <div class="try-step">
+            <div class="step-badge">2</div>
+            <div class="step-content">
+              <h3>GET TEST USDC</h3>
+              <p>Your agent needs USDC to pay for gas. Get 100 free TestUSDC.</p>
+              <button class="pixel-btn teal" onclick="fundWallet()" id="fund-btn" disabled>
+                GET 100 USDC
+              </button>
+              <div class="alert" id="fund-result"></div>
+            </div>
+          </div>
+
+          <!-- Step 3: Execute Transaction -->
+          <div class="try-step">
+            <div class="step-badge">3</div>
+            <div class="step-content">
+              <h3>EXECUTE A TRANSACTION</h3>
+              <p>Send a test transaction through CroGas. Your agent has <strong>0 CRO</strong> but will still transact!</p>
+              <div class="tx-form">
+                <input type="text" class="pixel-input" id="tx-to" placeholder="To address (default: self-transfer)" value="">
+                <input type="text" class="pixel-input" id="tx-data" placeholder="Data (default: 0x)" value="0x">
+              </div>
+              <button class="pixel-btn" onclick="executeTransaction()" id="execute-btn" disabled style="background: var(--yellow); color: var(--bg);">
+                EXECUTE VIA CROGAS
+              </button>
+              <div id="tx-result" class="tx-result" style="display: none;"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Live Stats -->
+    <section class="section">
+      <div class="section-title">STATION STATUS</div>
+      <div class="stats-bar">
+        <div class="stat-box pixel-border-simple">
+          <div class="stat-label">RELAYER BALANCE</div>
+          <div class="stat-value orange" id="cro-balance">--</div>
+        </div>
+        <div class="stat-box pixel-border-simple">
+          <div class="stat-label">USDC COLLECTED</div>
+          <div class="stat-value teal" id="usdc-earned">$0.00</div>
+        </div>
+        <div class="stat-box pixel-border-simple">
+          <div class="stat-label">CRO PRICE</div>
+          <div class="stat-value" id="cro-price">--</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Gas Pricing -->
+    <section class="section">
+      <div class="section-title">CHOOSE YOUR SPEED</div>
+      <div class="pumps-grid">
+        <div class="pump-card pixel-border-simple" onclick="selectPump(this)">
+          <div class="pump-grade">ECONOMY</div>
+          <div class="pump-mini">🐢</div>
+          <div class="pump-price" id="price-slow">$--</div>
+          <div class="pump-time">~30 seconds</div>
+        </div>
+        <div class="pump-card pixel-border-simple active" onclick="selectPump(this)">
+          <div class="pump-grade">REGULAR</div>
+          <div class="pump-mini">🚗</div>
+          <div class="pump-price" id="price-normal">$--</div>
+          <div class="pump-time">~10 seconds</div>
+        </div>
+        <div class="pump-card pixel-border-simple" onclick="selectPump(this)">
+          <div class="pump-grade">PREMIUM</div>
+          <div class="pump-mini">🚀</div>
+          <div class="pump-price" id="price-fast">$--</div>
+          <div class="pump-time">~3 seconds</div>
+        </div>
+      </div>
+      <p style="text-align: center; color: var(--cream-dim);">
+        Batch multiple transactions and get <span style="color: var(--yellow);">10% OFF</span>
+      </p>
+    </section>
+
+    <!-- For Developers -->
+    <section class="section">
+      <div class="section-title">FOR YOUR AGENT</div>
+      <div class="faucet-box pixel-border-simple">
+        <p style="margin-bottom: 16px;">Integrate CroGas into your AI agent with our SDK:</p>
+        <div class="code-block pixel-border-simple">
+          <pre style="color: var(--cream); font-size: 14px; overflow-x: auto;">
+<span style="color: var(--teal);">npm install</span> crogas-sdk
+
+<span style="color: var(--cream-dim);">// In your agent code:</span>
+<span style="color: var(--orange);">import</span> { GasStationClient } <span style="color: var(--orange);">from</span> <span style="color: var(--yellow);">'crogas-sdk'</span>;
+
+<span style="color: var(--orange);">const</span> client = <span style="color: var(--orange);">new</span> <span style="color: var(--teal);">GasStationClient</span>({
+  apiUrl: <span style="color: var(--yellow);">'${API}'</span>,
+  wallet: agentWallet,
+  chainId: <span style="color: var(--yellow);">338</span>
+});
+
+<span style="color: var(--cream-dim);">// Execute any transaction - pays gas with USDC</span>
+<span style="color: var(--orange);">await</span> client.<span style="color: var(--teal);">execute</span>({ to, data });
+          </pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- API Endpoints -->
+    <section class="section">
+      <div class="section-title">API ENDPOINTS</div>
+      <div class="api-grid">
+        <div class="api-item pixel-border-simple">
+          <span class="api-method post">POST</span>
+          <span class="api-path">/meta/relay</span>
+        </div>
+        <div class="api-item pixel-border-simple">
+          <span class="api-method post">POST</span>
+          <span class="api-path">/meta/batch</span>
+        </div>
+        <div class="api-item pixel-border-simple">
+          <span class="api-method">GET</span>
+          <span class="api-path">/meta/nonce/:addr</span>
+        </div>
+        <div class="api-item pixel-border-simple">
+          <span class="api-method">GET</span>
+          <span class="api-path">/estimate</span>
+        </div>
+        <div class="api-item pixel-border-simple">
+          <span class="api-method">GET</span>
+          <span class="api-path">/faucet/:addr</span>
+        </div>
+        <div class="api-item pixel-border-simple">
+          <span class="api-method">GET</span>
+          <span class="api-path">/health</span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <p>Built by <strong>Klyntos</strong> for Cronos x x402 Hackathon 2025</p>
+    <div class="footer-links">
+      <a href="https://github.com/klyntos/crogas" target="_blank">GITHUB</a>
+      <a href="https://x402.org" target="_blank">x402</a>
+      <a href="https://cronos.org" target="_blank">CRONOS</a>
+    </div>
+  </footer>
+
+  <!-- Ethers.js for wallet operations -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.9.0/dist/ethers.umd.min.js"></script>
+
+  <script>
+    const API = window.location.origin;
+    const CHAIN_ID = 338; // Cronos Testnet
+    const USDC_ADDRESS = '0x31ADD70B5B526C6c7Ad93c8E49E7EcE033c1b60E'; // TestUSDC
+
+    // Current wallet state
+    let currentWallet = null;
+    let metaDomain = null;
+
+    // Fetch meta domain info
+    async function getMetaDomain() {
+      if (!metaDomain) {
+        const res = await fetch(`${API}/meta/domain`);
+        metaDomain = await res.json();
+      }
+      return metaDomain;
+    }
+
+    // Generate a new random wallet
+    function generateWallet() {
+      const wallet = ethers.Wallet.createRandom();
+      setWallet(wallet);
+    }
+
+    // Toggle manual wallet input
+    function toggleManualWallet() {
+      const el = document.getElementById('manual-wallet');
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // Load wallet from private key
+    function loadWallet() {
+      const pk = document.getElementById('manual-pk').value.trim();
+      if (!pk) return alert('Enter a private key');
+      try {
+        const wallet = new ethers.Wallet(pk);
+        setWallet(wallet);
+        document.getElementById('manual-wallet').style.display = 'none';
+      } catch (e) {
+        alert('Invalid private key');
+      }
+    }
+
+    // Set the current wallet and update UI
+    function setWallet(wallet) {
+      currentWallet = wallet;
+
+      document.getElementById('wallet-display').style.display = 'block';
+      document.getElementById('wallet-address').textContent = wallet.address;
+      document.getElementById('wallet-pk').textContent = wallet.privateKey;
+
+      // Enable buttons
+      document.getElementById('fund-btn').disabled = false;
+      document.getElementById('execute-btn').disabled = false;
+
+      // Set default to address (self-transfer)
+      document.getElementById('tx-to').placeholder = `To address (default: ${wallet.address.slice(0,10)}...)`;
+
+      // Check balances
+      checkWalletBalances();
+    }
+
+    // Toggle private key visibility
+    function togglePK() {
+      const el = document.getElementById('wallet-pk');
+      el.classList.toggle('blur-text');
+    }
+
+    // Check wallet balances
+    async function checkWalletBalances() {
+      if (!currentWallet) return;
+
+      try {
+        // Get CRO balance from RPC
+        const provider = new ethers.JsonRpcProvider('https://evm-t3.cronos.org');
+        const balance = await provider.getBalance(currentWallet.address);
+        const croBalance = ethers.formatEther(balance);
+        document.getElementById('wallet-cro').textContent = `${parseFloat(croBalance).toFixed(4)} CRO`;
+
+        if (parseFloat(croBalance) > 0) {
+          document.getElementById('wallet-cro').classList.add('has-balance');
+        } else {
+          document.getElementById('wallet-cro').classList.remove('has-balance');
+        }
+
+        // Get USDC balance
+        const usdcAbi = ['function balanceOf(address) view returns (uint256)'];
+        const usdc = new ethers.Contract(USDC_ADDRESS, usdcAbi, provider);
+        const usdcBal = await usdc.balanceOf(currentWallet.address);
+        const usdcBalance = ethers.formatUnits(usdcBal, 6);
+        document.getElementById('wallet-usdc').textContent = `${parseFloat(usdcBalance).toFixed(2)} USDC`;
+      } catch (e) {
+        console.error('Balance check failed:', e);
+      }
+    }
+
+    // Fund wallet with TestUSDC
+    async function fundWallet() {
+      if (!currentWallet) return;
+
+      const btn = document.getElementById('fund-btn');
+      const result = document.getElementById('fund-result');
+
+      btn.disabled = true;
+      btn.innerHTML = 'SENDING<span class="loading-dots"></span>';
+
+      try {
+        const res = await fetch(`${API}/faucet/${currentWallet.address}`);
+        const data = await res.json();
+
+        if (data.success) {
+          result.className = 'alert success show';
+          result.innerHTML = `100 USDC sent! <a href="${data.explorer}" target="_blank">View tx</a>`;
+
+          // Wait a bit and refresh balances
+          setTimeout(checkWalletBalances, 3000);
+        } else {
+          result.className = 'alert error show';
+          result.textContent = data.error || 'Faucet failed';
+        }
+      } catch (e) {
+        result.className = 'alert error show';
+        result.textContent = 'Connection failed';
+      }
+
+      btn.disabled = false;
+      btn.textContent = 'GET 100 USDC';
+    }
+
+    // Execute transaction via CroGas
+    async function executeTransaction() {
+      if (!currentWallet) return;
+
+      const btn = document.getElementById('execute-btn');
+      const resultDiv = document.getElementById('tx-result');
+
+      const toAddress = document.getElementById('tx-to').value.trim() || currentWallet.address;
+      const txData = document.getElementById('tx-data').value.trim() || '0x';
+
+      btn.disabled = true;
+      btn.innerHTML = 'EXECUTING<span class="loading-dots"></span>';
+      resultDiv.style.display = 'none';
+
+      try {
+        // Step 1: Get meta domain and nonce
+        const domain = await getMetaDomain();
+        const nonceRes = await fetch(`${API}/meta/nonce/${currentWallet.address}`);
+        const nonceData = await nonceRes.json();
+
+        // Step 2: Build ForwardRequest
+        const deadline = Math.floor(Date.now() / 1000) + 3600;
+        const request = {
+          from: currentWallet.address,
+          to: toAddress,
+          value: '0',
+          gas: '100000',
+          nonce: nonceData.nonce,
+          deadline: deadline.toString(),
+          data: txData
+        };
+
+        // Step 3: Sign the request (EIP-712)
+        const signature = await currentWallet.signTypedData(
+          domain.domain,
+          domain.types,
+          {
+            from: request.from,
+            to: request.to,
+            value: BigInt(request.value),
+            gas: BigInt(request.gas),
+            nonce: BigInt(request.nonce),
+            deadline: BigInt(request.deadline),
+            data: request.data
+          }
+        );
+
+        // Step 4: Submit to get 402
+        const initialRes = await fetch(`${API}/meta/relay`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ request, signature })
+        });
+
+        if (initialRes.status !== 402) {
+          if (initialRes.ok) {
+            const result = await initialRes.json();
+            showTxResult(true, result);
+            return;
+          }
+          throw new Error('Unexpected response');
+        }
+
+        // Step 5: Parse 402 response
+        const x402 = await initialRes.json();
+        const paymentInfo = x402.x402.accepts[0];
+        const paymentAmount = BigInt(paymentInfo.maxAmountRequired);
+
+        // Step 6: Create USDC authorization
+        const validAfter = Math.floor(Date.now() / 1000) - 60;
+        const validBefore = Math.floor(Date.now() / 1000) + 3600;
+        const usdcNonce = ethers.hexlify(ethers.randomBytes(32));
+
+        const authorization = {
+          from: currentWallet.address,
+          to: paymentInfo.payTo,
+          value: paymentAmount.toString(),
+          validAfter: validAfter.toString(),
+          validBefore: validBefore.toString(),
+          nonce: usdcNonce
+        };
+
+        // Step 7: Sign USDC authorization
+        const usdcDomain = {
+          name: 'Test USDC',
+          version: '1',
+          chainId: CHAIN_ID,
+          verifyingContract: USDC_ADDRESS
+        };
+
+        const usdcTypes = {
+          TransferWithAuthorization: [
+            { name: 'from', type: 'address' },
+            { name: 'to', type: 'address' },
+            { name: 'value', type: 'uint256' },
+            { name: 'validAfter', type: 'uint256' },
+            { name: 'validBefore', type: 'uint256' },
+            { name: 'nonce', type: 'bytes32' }
+          ]
+        };
+
+        const usdcSignature = await currentWallet.signTypedData(
+          usdcDomain,
+          usdcTypes,
+          {
+            from: authorization.from,
+            to: authorization.to,
+            value: BigInt(authorization.value),
+            validAfter: BigInt(authorization.validAfter),
+            validBefore: BigInt(authorization.validBefore),
+            nonce: authorization.nonce
+          }
+        );
+
+        // Step 8: Create payment header
+        const payment = {
+          version: 1,
+          scheme: 'exact',
+          network: paymentInfo.network,
+          payload: { signature: usdcSignature, authorization }
+        };
+        const paymentHeader = btoa(JSON.stringify(payment));
+
+        // Step 9: Retry with payment
+        const finalRes = await fetch(`${API}/meta/relay`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Payment': paymentHeader
+          },
+          body: JSON.stringify({ request, signature })
+        });
+
+        if (!finalRes.ok) {
+          const err = await finalRes.json();
+          throw new Error(err.error || err.message || 'Transaction failed');
+        }
+
+        const result = await finalRes.json();
+        showTxResult(true, result, x402.quote);
+
+        // Refresh balances
+        setTimeout(checkWalletBalances, 3000);
+
+      } catch (e) {
+        console.error('Transaction failed:', e);
+        showTxResult(false, { error: e.message });
+      }
+
+      btn.disabled = false;
+      btn.textContent = 'EXECUTE VIA CROGAS';
+    }
+
+    // Show transaction result
+    function showTxResult(success, data, quote) {
+      const div = document.getElementById('tx-result');
+      div.style.display = 'block';
+
+      if (success) {
+        div.className = 'tx-result success';
+        div.innerHTML = `
+          <h4>TRANSACTION SUCCESSFUL!</h4>
+          <div class="tx-detail">
+            <span>Status:</span>
+            <span style="color: var(--teal);">Confirmed</span>
+          </div>
+          <div class="tx-detail">
+            <span>Tx Hash:</span>
+            <span><a href="https://explorer.cronos.org/testnet3/tx/${data.txHash}" target="_blank">${data.txHash?.slice(0,20)}...</a></span>
+          </div>
+          ${quote ? `
+          <div class="tx-detail">
+            <span>Gas Paid:</span>
+            <span style="color: var(--yellow);">${quote.priceUSDC} USDC</span>
+          </div>
+          ` : ''}
+          <div class="tx-detail">
+            <span>CRO Used:</span>
+            <span style="color: var(--teal);">0 CRO (relayer paid)</span>
+          </div>
+        `;
+      } else {
+        div.className = 'tx-result error';
+        div.innerHTML = `
+          <h4>TRANSACTION FAILED</h4>
+          <div class="tx-detail">
+            <span>Error:</span>
+            <span>${data.error || 'Unknown error'}</span>
+          </div>
+        `;
+      }
+    }
+
+    async function checkHealth() {
+      try {
+        const res = await fetch(`${API}/health`);
+        const data = await res.json();
+        if (data.wallets) {
+          document.getElementById('cro-balance').textContent =
+            parseFloat(data.wallets.relayer.croBal).toFixed(2) + ' CRO';
+          document.getElementById('usdc-earned').textContent =
+            '$' + (parseFloat(data.wallets.relayer.usdcBal) || 0).toFixed(2);
+        }
+      } catch (e) {
+        document.getElementById('cro-balance').textContent = 'OFFLINE';
+      }
+    }
+
+    async function fetchPricing() {
+      try {
+        const res = await fetch(`${API}/estimate?to=0x523D5F604788a9cFC74CcF81F0DE5B3b5623635F&data=0x`);
+        const data = await res.json();
+        if (data.pricing) {
+          document.getElementById('price-slow').textContent = '$' + parseFloat(data.pricing.slow.priceUSDC).toFixed(4);
+          document.getElementById('price-normal').textContent = '$' + parseFloat(data.pricing.normal.priceUSDC).toFixed(4);
+          document.getElementById('price-fast').textContent = '$' + parseFloat(data.pricing.fast.priceUSDC).toFixed(4);
+        }
+        if (data.croPrice) {
+          document.getElementById('cro-price').textContent = '$' + data.croPrice.toFixed(4);
+        }
+      } catch (e) {}
+    }
+
+    function selectPump(el) {
+      document.querySelectorAll('.pump-card').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    checkHealth();
+    fetchPricing();
+    setInterval(() => { checkHealth(); fetchPricing(); }, 30000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+{
+  "name": "@crogas/sdk",
+  "version": "1.0.0",
+  "description": "Agent Gas Station SDK - Pay Cronos gas fees with USDC",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "cronos",
+    "gas-station",
+    "x402",
+    "meta-transactions",
+    "ai-agents",
+    "usdc",
+    "gasless"
+  ],
+  "author": "Klyntos Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/klyntos/crogas-sdk"
+  },
+  "homepage": "https://crogas.io",
+  "dependencies": {
+    "ethers": "^6.9.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3"
+  },
+  "peerDependencies": {
+    "ethers": "^6.0.0"
+  }
+}
