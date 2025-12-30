@@ -777,6 +777,35 @@
     .tx-detail span:last-child { color: var(--cream); }
     .tx-detail a { color: var(--teal); }
 
+    .demo-tx-info {
+      background: var(--bg);
+      padding: 16px;
+      margin-bottom: 16px;
+      border: 2px solid var(--surface);
+    }
+
+    .demo-tx-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px dashed var(--surface);
+      font-size: 16px;
+    }
+
+    .demo-tx-row:last-child { border-bottom: none; }
+
+    .demo-label {
+      color: var(--cream-dim);
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+    }
+
+    .demo-value {
+      color: var(--cream);
+      font-size: 14px;
+      word-break: break-all;
+    }
+
     .loading-dots::after {
       content: '';
       animation: dots 1.5s steps(4) infinite;
@@ -973,14 +1002,32 @@
           <div class="try-step">
             <div class="step-badge">3</div>
             <div class="step-content">
-              <h3>EXECUTE A TRANSACTION</h3>
-              <p>Send a test transaction through CroGas. Your agent has <strong>0 CRO</strong> but will still transact!</p>
-              <div class="tx-form">
-                <input type="text" class="pixel-input" id="tx-to" placeholder="To address (default: self-transfer)" value="">
-                <input type="text" class="pixel-input" id="tx-data" placeholder="Data (default: 0x)" value="0x">
+              <h3>SEND USDC (GASLESS!)</h3>
+              <p>Your wallet has <strong>0 CRO</strong> but can still transact! Click to send 1 USDC to the demo wallet.</p>
+              <div class="demo-tx-info">
+                <div class="demo-tx-row">
+                  <span class="demo-label">FROM:</span>
+                  <span class="demo-value" id="demo-from">Your wallet</span>
+                </div>
+                <div class="demo-tx-row">
+                  <span class="demo-label">TO:</span>
+                  <span class="demo-value" id="demo-to">0xF40B9a4...7da7e2 (Gas Station)</span>
+                </div>
+                <div class="demo-tx-row">
+                  <span class="demo-label">AMOUNT:</span>
+                  <span class="demo-value" style="color: var(--teal);">1.00 USDC</span>
+                </div>
+                <div class="demo-tx-row">
+                  <span class="demo-label">GAS FEE:</span>
+                  <span class="demo-value" style="color: var(--yellow);">~$0.01 USDC (paid via x402)</span>
+                </div>
+                <div class="demo-tx-row">
+                  <span class="demo-label">CRO NEEDED:</span>
+                  <span class="demo-value" style="color: var(--orange);">0 CRO ✓</span>
+                </div>
               </div>
-              <button class="pixel-btn" onclick="executeTransaction()" id="execute-btn" disabled style="background: var(--yellow); color: var(--bg);">
-                EXECUTE VIA CROGAS
+              <button class="pixel-btn" onclick="executeDemoTransfer()" id="execute-btn" disabled style="background: var(--yellow); color: var(--bg);">
+                SEND 1 USDC VIA CROGAS
               </button>
               <div id="tx-result" class="tx-result" style="display: none;"></div>
             </div>
@@ -1110,6 +1157,13 @@
     const API = window.location.origin;
     const CHAIN_ID = 338; // Cronos Testnet
     const USDC_ADDRESS = '0x38Bf87D7281A2F84c8ed5aF1410295f7BD4E20a1'; // TestUSDC
+    const DEMO_RECIPIENT = '0xF40B9a42cD26166051455c23508C2EbA997da7e2'; // Relayer (demo recipient)
+    const DEMO_AMOUNT = '1000000'; // 1 USDC (6 decimals)
+
+    // ERC20 interface for USDC transfer
+    const ERC20_INTERFACE = new ethers.Interface([
+      'function transfer(address to, uint256 amount) returns (bool)'
+    ]);
 
     // Current wallet state
     let currentWallet = null;
@@ -1167,12 +1221,12 @@
       document.getElementById('wallet-address').textContent = wallet.address;
       document.getElementById('wallet-pk').textContent = wallet.privateKey;
 
+      // Update demo transaction FROM address
+      document.getElementById('demo-from').textContent = wallet.address.slice(0,10) + '...' + wallet.address.slice(-8);
+
       // Enable buttons
       document.getElementById('fund-btn').disabled = false;
       document.getElementById('execute-btn').disabled = false;
-
-      // Set default to address (self-transfer)
-      document.getElementById('tx-to').placeholder = `To address (default: ${wallet.address.slice(0,10)}...)`;
 
       // Check balances
       checkWalletBalances();
@@ -1251,36 +1305,39 @@
       btn.textContent = 'GET 100 USDC';
     }
 
-    // Execute transaction via CroGas
-    async function executeTransaction() {
+    // Execute demo USDC transfer via CroGas
+    async function executeDemoTransfer() {
       if (!currentWallet) return;
 
       const btn = document.getElementById('execute-btn');
       const resultDiv = document.getElementById('tx-result');
 
-      const toAddress = document.getElementById('tx-to').value.trim() || currentWallet.address;
-      const txData = document.getElementById('tx-data').value.trim() || '0x';
-
       btn.disabled = true;
-      btn.innerHTML = 'EXECUTING<span class="loading-dots"></span>';
+      btn.innerHTML = 'SENDING<span class="loading-dots"></span>';
       resultDiv.style.display = 'none';
 
       try {
+        // Encode USDC transfer call: transfer(DEMO_RECIPIENT, 1 USDC)
+        const transferData = ERC20_INTERFACE.encodeFunctionData('transfer', [
+          DEMO_RECIPIENT,
+          DEMO_AMOUNT
+        ]);
+
         // Step 1: Get meta domain and nonce
         const domain = await getMetaDomain();
         const nonceRes = await fetch(`${API}/meta/nonce/${currentWallet.address}`);
         const nonceData = await nonceRes.json();
 
-        // Step 2: Build ForwardRequest
+        // Step 2: Build ForwardRequest (calling USDC contract)
         const deadline = Math.floor(Date.now() / 1000) + 3600;
         const request = {
           from: currentWallet.address,
-          to: toAddress,
+          to: USDC_ADDRESS,  // Call USDC contract
           value: '0',
-          gas: '100000',
+          gas: '150000',
           nonce: nonceData.nonce,
           deadline: deadline.toString(),
-          data: txData
+          data: transferData  // transfer(recipient, amount)
         };
 
         // Step 3: Sign the request (EIP-712)
@@ -1298,7 +1355,7 @@
           }
         );
 
-        // Step 4: Submit to get 402
+        // Step 4: Submit to get 402 Payment Required
         const initialRes = await fetch(`${API}/meta/relay`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1309,9 +1366,11 @@
           if (initialRes.ok) {
             const result = await initialRes.json();
             showTxResult(true, result);
+            setTimeout(checkWalletBalances, 3000);
             return;
           }
-          throw new Error('Unexpected response');
+          const err = await initialRes.json();
+          throw new Error(err.error || 'Unexpected response');
         }
 
         // Step 5: Parse 402 response
@@ -1319,7 +1378,9 @@
         const paymentInfo = x402.x402.accepts[0];
         const paymentAmount = BigInt(paymentInfo.maxAmountRequired);
 
-        // Step 6: Create USDC authorization
+        console.log('402 received, gas fee:', ethers.formatUnits(paymentAmount, 6), 'USDC');
+
+        // Step 6: Create USDC authorization for gas payment
         const validAfter = Math.floor(Date.now() / 1000) - 60;
         const validBefore = Math.floor(Date.now() / 1000) + 3600;
         const usdcNonce = ethers.hexlify(ethers.randomBytes(32));
@@ -1390,7 +1451,7 @@
         }
 
         const result = await finalRes.json();
-        showTxResult(true, result, x402.quote);
+        showTxResult(true, result, x402.quote, true);
 
         // Refresh balances
         setTimeout(checkWalletBalances, 3000);
@@ -1401,11 +1462,11 @@
       }
 
       btn.disabled = false;
-      btn.textContent = 'EXECUTE VIA CROGAS';
+      btn.textContent = 'SEND 1 USDC VIA CROGAS';
     }
 
     // Show transaction result
-    function showTxResult(success, data, quote) {
+    function showTxResult(success, data, quote, isTransfer = false) {
       const div = document.getElementById('tx-result');
       div.style.display = 'block';
 
@@ -1413,23 +1474,29 @@
         div.className = 'tx-result success';
         div.innerHTML = `
           <h4>TRANSACTION SUCCESSFUL!</h4>
+          ${isTransfer ? `
           <div class="tx-detail">
-            <span>Status:</span>
-            <span style="color: var(--teal);">Confirmed</span>
+            <span>Sent:</span>
+            <span style="color: var(--teal);">1.00 USDC</span>
           </div>
           <div class="tx-detail">
-            <span>Tx Hash:</span>
-            <span><a href="https://explorer.cronos.org/testnet3/tx/${data.txHash}" target="_blank">${data.txHash?.slice(0,20)}...</a></span>
-          </div>
-          ${quote ? `
-          <div class="tx-detail">
-            <span>Gas Paid:</span>
-            <span style="color: var(--yellow);">${quote.priceUSDC} USDC</span>
+            <span>To:</span>
+            <span>${DEMO_RECIPIENT.slice(0,10)}...${DEMO_RECIPIENT.slice(-8)}</span>
           </div>
           ` : ''}
           <div class="tx-detail">
-            <span>CRO Used:</span>
-            <span style="color: var(--teal);">0 CRO (relayer paid)</span>
+            <span>Tx Hash:</span>
+            <span><a href="https://explorer.cronos.org/testnet/tx/${data.txHash}" target="_blank">${data.txHash?.slice(0,20)}...</a></span>
+          </div>
+          ${quote ? `
+          <div class="tx-detail">
+            <span>Gas Fee:</span>
+            <span style="color: var(--yellow);">${quote.priceUSDC} USDC</span>
+          </div>
+          ` : ''}
+          <div class="tx-detail" style="background: var(--surface); padding: 8px; margin-top: 8px;">
+            <span>CRO Used by Agent:</span>
+            <span style="color: var(--orange); font-weight: bold;">0 CRO</span>
           </div>
         `;
       } else {
