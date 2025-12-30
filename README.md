@@ -4,7 +4,7 @@
 
 **Cronos x x402 Hackathon 2025** | Bringing x402 to Cronos
 
-**Features:** Smart Gas Pricing | Batch Transactions | Auto-Rebalancing | Web Dashboard
+**Features:** Smart Gas Pricing | Batch Transactions | Auto-Rebalancing | Horizontal Scaling | Web Dashboard
 
 ---
 
@@ -280,6 +280,47 @@ The Gas Station automatically maintains its CRO balance by swapping USDC → CRO
 - Check interval: Every 5 minutes
 
 This makes the Gas Station **fully autonomous** - it never runs out of gas as long as agents keep paying USDC fees!
+
+### Horizontal Scaling (Relayer Pool)
+
+CroGas supports multiple relayer wallets for high-throughput scenarios (1000+ agents):
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  RELAYER POOL: Horizontal Scaling                           │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  Agent 1 ────┐                                              │
+│  Agent 2 ────┼──► Load Balancer ──┬──► Relayer 1 ──┐        │
+│  Agent 3 ────┤   (least-busy)     ├──► Relayer 2 ──┼──► Chain│
+│    ...       │                    ├──► Relayer 3 ──┤        │
+│  Agent 1000 ─┘                    └──► Relayer N ──┘        │
+│                                                             │
+│  Each relayer:                                              │
+│  • Independent nonce tracking                               │
+│  • Parallel transaction submission                          │
+│  • Auto-recovery on errors                                  │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Configuration:**
+```bash
+# Single relayer (default)
+RELAYER_PRIVATE_KEY=0x...
+
+# Multiple relayers (comma-separated)
+RELAYER_PRIVATE_KEYS=0xkey1...,0xkey2...,0xkey3...
+```
+
+**Throughput:**
+| Relayers | Transactions/sec | Agents Supported |
+|----------|------------------|------------------|
+| 1        | ~2 tx/sec        | ~100 agents      |
+| 5        | ~10 tx/sec       | ~500 agents      |
+| 10       | ~20 tx/sec       | ~1000 agents     |
+
+Pool stats available at `/health` endpoint.
 
 ### Web Dashboard
 

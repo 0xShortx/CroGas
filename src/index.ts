@@ -10,6 +10,7 @@ import { generalLimiter, relayLimiter, estimateLimiter } from "./middleware/rate
 import { errorMiddleware } from "./middleware/error.middleware.js";
 import { walletService } from "./services/wallet.service.js";
 import { rebalanceService } from "./services/rebalance.service.js";
+import { relayerPool } from "./services/relayer-pool.service.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -55,16 +56,24 @@ app.use(errorMiddleware);
 // Start server
 async function start() {
   try {
+    // Initialize relayer pool (supports multiple relayers for scaling)
+    await relayerPool.initialize();
+    logger.info("Relayer pool ready", {
+      relayerCount: relayerPool.size,
+      addresses: relayerPool.getAddresses(),
+    });
+
     // Log startup info
     logger.info("Starting Agent Gas Station...", {
       network: env.CHAIN_ID === 25 ? "Cronos Mainnet" : "Cronos Testnet",
       chainId: env.CHAIN_ID,
       relayerAddress: walletService.address,
+      poolSize: relayerPool.size,
     });
 
     // Check relayer balance
     const balances = await walletService.getBalances();
-    logger.info("Relayer wallet balances", {
+    logger.info("Primary relayer balances", {
       CRO: balances.cro,
       USDC: balances.usdc,
     });

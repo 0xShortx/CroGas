@@ -3,6 +3,7 @@ import { walletService } from "../services/wallet.service.js";
 import { transactionService } from "../services/transaction.service.js";
 import { pricingService } from "../services/pricing.service.js";
 import { rebalanceService } from "../services/rebalance.service.js";
+import { relayerPool } from "../services/relayer-pool.service.js";
 import { logger } from "../utils/logger.js";
 
 export async function healthController(
@@ -49,6 +50,7 @@ export async function healthController(
         ? []
         : [`Low CRO balance: ${balances.cro} CRO (threshold: ${croThreshold})`],
       autoRebalance: rebalanceService.getStatus(),
+      relayerPool: relayerPool.getStats(),
     });
   } catch (error) {
     logger.error("Health check failed", { error });
