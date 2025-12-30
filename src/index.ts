@@ -9,22 +9,16 @@ import routes from "./api/routes.js";
 import { generalLimiter, relayLimiter, estimateLimiter } from "./middleware/rateLimit.middleware.js";
 import { errorMiddleware } from "./middleware/error.middleware.js";
 import { walletService } from "./services/wallet.service.js";
+import { rebalanceService } from "./services/rebalance.service.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// Security middleware (relaxed CSP for dashboard)
+// Security middleware (CSP disabled for hackathon demo dashboard)
 app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      connectSrc: ["'self'", "https://api.coingecko.com"],
-    },
-  },
+  contentSecurityPolicy: false,
 }));
 app.use(cors());
 
@@ -78,6 +72,9 @@ async function start() {
     if (parseFloat(balances.cro) < 1) {
       logger.warn("⚠️  Low CRO balance! Relayer may not be able to pay gas fees.");
     }
+
+    // Start auto-rebalance service (swaps USDC → CRO when low)
+    rebalanceService.start();
 
     // Start HTTP server
     app.listen(env.PORT, () => {

@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { walletService } from "../services/wallet.service.js";
 import { transactionService } from "../services/transaction.service.js";
 import { pricingService } from "../services/pricing.service.js";
+import { rebalanceService } from "../services/rebalance.service.js";
 import { logger } from "../utils/logger.js";
 
 export async function healthController(
@@ -47,6 +48,7 @@ export async function healthController(
       warnings: isHealthy
         ? []
         : [`Low CRO balance: ${balances.cro} CRO (threshold: ${croThreshold})`],
+      autoRebalance: rebalanceService.getStatus(),
     });
   } catch (error) {
     logger.error("Health check failed", { error });

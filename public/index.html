@@ -651,16 +651,66 @@
       flex: 1;
     }
 
-    .wallet-balance {
-      font-family: 'Press Start 2P', monospace;
-      font-size: 8px;
-      padding: 4px 8px;
-      background: var(--red-dark);
-      color: var(--cream);
+    .wallet-balances {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 16px;
     }
 
-    .wallet-balance.has-balance {
-      background: var(--teal-dark);
+    .balance-box {
+      padding: 16px;
+      text-align: center;
+      border: 2px solid;
+    }
+
+    .balance-box.cro {
+      background: rgba(192, 64, 64, 0.2);
+      border-color: var(--red);
+    }
+
+    .balance-box.usdc {
+      background: rgba(64, 160, 160, 0.2);
+      border-color: var(--teal);
+    }
+
+    .balance-box.usdc.funded {
+      background: rgba(64, 160, 160, 0.4);
+      border-color: var(--teal);
+    }
+
+    .balance-label {
+      display: block;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      color: var(--cream-dim);
+      margin-bottom: 8px;
+    }
+
+    .balance-value {
+      display: block;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 14px;
+      color: var(--cream);
+      margin-bottom: 4px;
+    }
+
+    .balance-box.cro .balance-value {
+      color: var(--red);
+    }
+
+    .balance-box.usdc .balance-value {
+      color: var(--teal);
+    }
+
+    .balance-note {
+      display: block;
+      font-size: 12px;
+      color: var(--cream-dim);
+    }
+
+    @media (max-width: 500px) {
+      .wallet-balances { grid-template-columns: 1fr; }
     }
 
     .blur-text {
@@ -880,16 +930,23 @@
                 <div class="wallet-field">
                   <label>Address:</label>
                   <code id="wallet-address">-</code>
-                  <span class="wallet-balance" id="wallet-cro">0 CRO</span>
                 </div>
                 <div class="wallet-field">
                   <label>Private Key:</label>
                   <code id="wallet-pk" class="blur-text">-</code>
                   <button class="mini-btn" onclick="togglePK()">SHOW</button>
                 </div>
-                <div class="wallet-field">
-                  <label>USDC Balance:</label>
-                  <code id="wallet-usdc">0 USDC</code>
+                <div class="wallet-balances">
+                  <div class="balance-box cro">
+                    <span class="balance-label">CRO Balance</span>
+                    <span class="balance-value" id="wallet-cro">0.0000 CRO</span>
+                    <span class="balance-note">No native tokens!</span>
+                  </div>
+                  <div class="balance-box usdc">
+                    <span class="balance-label">USDC Balance</span>
+                    <span class="balance-value" id="wallet-usdc">0.00 USDC</span>
+                    <span class="balance-note" id="usdc-note">Get tokens below</span>
+                  </div>
                 </div>
               </div>
               <div id="manual-wallet" style="display: none; margin-top: 12px;">
@@ -1047,16 +1104,19 @@
   </footer>
 
   <!-- Ethers.js for wallet operations -->
-  <script src="https://cdn.jsdelivr.net/npm/ethers@6.9.0/dist/ethers.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 
   <script>
     const API = window.location.origin;
     const CHAIN_ID = 338; // Cronos Testnet
-    const USDC_ADDRESS = '0x31ADD70B5B526C6c7Ad93c8E49E7EcE033c1b60E'; // TestUSDC
+    const USDC_ADDRESS = '0x38Bf87D7281A2F84c8ed5aF1410295f7BD4E20a1'; // TestUSDC
 
     // Current wallet state
     let currentWallet = null;
     let metaDomain = null;
+
+    // Check if ethers loaded
+    console.log('Ethers loaded:', typeof ethers !== 'undefined');
 
     // Fetch meta domain info
     async function getMetaDomain() {
@@ -1069,8 +1129,15 @@
 
     // Generate a new random wallet
     function generateWallet() {
-      const wallet = ethers.Wallet.createRandom();
-      setWallet(wallet);
+      try {
+        console.log('Generating wallet...');
+        const wallet = ethers.Wallet.createRandom();
+        console.log('Wallet created:', wallet.address);
+        setWallet(wallet);
+      } catch (e) {
+        console.error('Error generating wallet:', e);
+        alert('Error: ' + e.message);
+      }
     }
 
     // Toggle manual wallet input
@@ -1163,8 +1230,14 @@
           result.className = 'alert success show';
           result.innerHTML = `100 USDC sent! <a href="${data.explorer}" target="_blank">View tx</a>`;
 
-          // Wait a bit and refresh balances
-          setTimeout(checkWalletBalances, 3000);
+          // Update balance display immediately with expected value
+          document.getElementById('wallet-usdc').textContent = '100.00 USDC';
+          document.getElementById('usdc-note').textContent = 'Ready to transact!';
+          document.querySelector('.balance-box.usdc').classList.add('funded');
+
+          // Also refresh from chain after a delay to confirm
+          setTimeout(checkWalletBalances, 5000);
+          setTimeout(checkWalletBalances, 10000);
         } else {
           result.className = 'alert error show';
           result.textContent = data.error || 'Faucet failed';
@@ -1265,7 +1338,7 @@
           name: 'Test USDC',
           version: '1',
           chainId: CHAIN_ID,
-          verifyingContract: USDC_ADDRESS
+          verifyingContract: ethers.getAddress(USDC_ADDRESS)
         };
 
         const usdcTypes = {
