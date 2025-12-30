@@ -1054,6 +1054,20 @@
           <div class="stat-value" id="cro-price">--</div>
         </div>
       </div>
+      <div class="stats-bar" style="margin-top: 16px;">
+        <div class="stat-box pixel-border-simple">
+          <div class="stat-label">RELAYER POOL</div>
+          <div class="stat-value" id="pool-size">1 relayer</div>
+        </div>
+        <div class="stat-box pixel-border-simple">
+          <div class="stat-label">AUTO-REBALANCE</div>
+          <div class="stat-value teal" id="rebalance-status">Active</div>
+        </div>
+        <div class="stat-box pixel-border-simple">
+          <div class="stat-label">TRANSACTIONS</div>
+          <div class="stat-value" id="tx-count">0</div>
+        </div>
+      </div>
     </section>
 
     <!-- Gas Pricing -->
@@ -1520,12 +1534,35 @@
       try {
         const res = await fetch(`${API}/health`);
         const data = await res.json();
-        if (data.wallets) {
+
+        // Relayer balance
+        if (data.relayerBalance) {
           document.getElementById('cro-balance').textContent =
-            parseFloat(data.wallets.relayer.croBal).toFixed(2) + ' CRO';
+            parseFloat(data.relayerBalance.CRO).toFixed(2) + ' CRO';
           document.getElementById('usdc-earned').textContent =
-            '$' + (parseFloat(data.wallets.relayer.usdcBal) || 0).toFixed(2);
+            '$' + parseFloat(data.relayerBalance.USDC).toLocaleString();
         }
+
+        // Relayer pool
+        if (data.relayerPool) {
+          const count = data.relayerPool.totalRelayers;
+          document.getElementById('pool-size').textContent =
+            count + (count === 1 ? ' relayer' : ' relayers');
+        }
+
+        // Auto-rebalance
+        if (data.autoRebalance) {
+          const status = data.autoRebalance.enabled ? 'Active' : 'Disabled';
+          document.getElementById('rebalance-status').textContent = status;
+          document.getElementById('rebalance-status').style.color =
+            data.autoRebalance.enabled ? 'var(--teal)' : 'var(--cream-dim)';
+        }
+
+        // Transaction count
+        if (data.stats) {
+          document.getElementById('tx-count').textContent = data.stats.totalRelayed;
+        }
+
       } catch (e) {
         document.getElementById('cro-balance').textContent = 'OFFLINE';
       }
