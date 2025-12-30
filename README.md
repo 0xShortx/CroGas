@@ -19,8 +19,8 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/klyntos/crogas
-cd crogas
+git clone https://github.com/0xShortx/CroGas.git
+cd CroGas
 
 # Install dependencies
 npm install
@@ -28,7 +28,6 @@ npm install
 
 ### Step 2: Start the Gas Station Server (30 seconds)
 
-Open **Terminal 1**:
 ```bash
 npm run dev
 ```
@@ -37,41 +36,61 @@ You should see:
 ```
 [info] Agent Gas Station started on port 3000
 [info] Relayer wallet: 0xF40B9a42...
-[info] CRO Balance: 4.85 CRO
+[info] CRO Balance: 49.10 CRO
 ```
 
 **Keep this terminal running!**
 
-### Step 3: Try It Yourself (2 minutes)
+### Step 3: Try It - Choose Your Method
 
-Open **Terminal 2**:
+#### Option A: Web Dashboard (Recommended for Judges)
+
+Open your browser to **http://localhost:3000**
+
+The interactive dashboard lets you:
+1. **Generate a wallet** - Creates a new wallet with 0 CRO
+2. **Get 100 USDC** - One-click faucet
+3. **Send 1 USDC** - Execute a real gasless transaction!
+
+You'll see the transaction execute on-chain with **0 CRO spent** - proof that the agent paid gas with USDC only.
+
+#### Option B: Quick Demo Script
+
+```bash
+npm run demo
+```
+
+Automated demo that creates a wallet, gets USDC, and executes a gasless transfer in ~15 seconds.
+
+**Output:**
+```
+🔥 CroGas Quick Demo
+
+📱 Agent Wallet: 0x7906...
+📊 Agent Balances:
+   CRO:  0.0 (ZERO!)
+   USDC: 100.0
+
+🚀 Sending 1 USDC via CroGas (0 CRO needed!)...
+
+✅ SUCCESS!
+   Transaction: 0x058d...
+   Explorer: https://explorer.cronos.org/testnet/tx/0x...
+
+📊 Final Balances:
+   CRO:  0.0 (STILL ZERO!)
+   USDC: 99.99 (paid ~0.01 gas + 1 transfer)
+
+🎉 Demo complete! Agent transacted without CRO!
+```
+
+#### Option C: Interactive CLI
+
 ```bash
 npm run try
 ```
 
-This interactive demo will:
-1. **Create a fresh wallet** - Brand new wallet with 0 CRO
-2. **Get TestUSDC from faucet** - 100 USDC for testing
-3. **Execute a gasless transaction** - Using only USDC!
-4. **Show the results** - Proof that 0 CRO was spent
-
-**What you'll see:**
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    SUCCESS!                                 │
-├─────────────────────────────────────────────────────────────┤
-│  Transaction Hash: 0x2a966cdb9165c8c86d150c4c3...
-│
-│  You paid:
-│     CRO:  0.000000 CRO (should be 0!)
-│     USDC: 0.010000 USDC (gas fee)
-│
-│  View on Explorer:
-│     https://explorer.cronos.org/testnet/tx/0x...
-└─────────────────────────────────────────────────────────────┘
-
- ZERO CRO SPENT! Your agent paid gas with USDC!
-```
+Step-by-step interactive terminal experience.
 
 ### Alternative: Manual Testing with curl
 
@@ -480,11 +499,11 @@ crogas/
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Start development server with hot reload |
-| `npm run try` | Quick interactive demo for judges |
-| `npm run demo` | Full interactive CLI demo |
-| `npm run test` | Run unit tests (40 tests) |
-| `npm run test:e2e` | Run end-to-end test |
+| `npm run dev` | Start server + dashboard at http://localhost:3000 |
+| `npm run demo` | Quick automated demo (~15 sec) |
+| `npm run try` | Interactive CLI demo |
+| `npm run test:e2e` | Full end-to-end SDK test |
+| `npm run test` | Run unit tests |
 | `npm run build` | Build for production |
 
 ---
