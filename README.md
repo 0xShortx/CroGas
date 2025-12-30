@@ -4,7 +4,7 @@
 
 **Cronos x x402 Hackathon 2025** | Bringing x402 to Cronos
 
-**Features:** Smart Gas Pricing | Batch Transactions | Web Dashboard
+**Features:** Smart Gas Pricing | Batch Transactions | Auto-Rebalancing | Web Dashboard
 
 ---
 
@@ -245,6 +245,41 @@ Perfect for:
 - Bulk token approvals
 - Multi-step DeFi operations
 - Batch NFT mints
+
+### Auto-Rebalancing
+
+The Gas Station automatically maintains its CRO balance by swapping USDC → CRO when needed:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  AUTO-REBALANCE: Self-Sustaining Gas Station                │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  Agent pays USDC ──► Gas Station collects fees              │
+│                              │                              │
+│                              ▼                              │
+│                    CRO balance < 10?                        │
+│                       │          │                          │
+│                      YES         NO                         │
+│                       │          │                          │
+│                       ▼          ▼                          │
+│            Swap USDC→CRO    Continue normal                 │
+│            via VVS DEX      operations                      │
+│                              │                              │
+│                              ▼                              │
+│                    Gas Station pays CRO                     │
+│                    for next transaction                     │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Configuration:**
+- Trigger: CRO balance falls below 10 CRO
+- Target: Restore to 50 CRO
+- DEX: VVS Finance on Cronos
+- Check interval: Every 5 minutes
+
+This makes the Gas Station **fully autonomous** - it never runs out of gas as long as agents keep paying USDC fees!
 
 ### Web Dashboard
 
