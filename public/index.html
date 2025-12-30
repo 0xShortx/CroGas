@@ -1399,7 +1399,7 @@
           name: 'Test USDC',
           version: '1',
           chainId: CHAIN_ID,
-          verifyingContract: ethers.getAddress(USDC_ADDRESS)
+          verifyingContract: USDC_ADDRESS
         };
 
         const usdcTypes = {
@@ -1433,6 +1433,10 @@
           network: paymentInfo.network,
           payload: { signature: usdcSignature, authorization }
         };
+
+        console.log('Payment payload:', JSON.stringify(payment, null, 2));
+        console.log('USDC signature length:', usdcSignature.length);
+
         const paymentHeader = btoa(JSON.stringify(payment));
 
         // Step 9: Retry with payment
@@ -1447,7 +1451,8 @@
 
         if (!finalRes.ok) {
           const err = await finalRes.json();
-          throw new Error(err.error || err.message || 'Transaction failed');
+          console.error('Payment failed response:', err);
+          throw new Error(err.details || err.error || err.message || 'Transaction failed');
         }
 
         const result = await finalRes.json();
